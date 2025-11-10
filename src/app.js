@@ -17,8 +17,26 @@ const app = express();
 app.use(helmet());
 
 // CORS configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://4cbitzfrontend-production.up.railway.app',
+  'http://localhost:5173',
+  'http://localhost:5001'
+].filter(Boolean); // Remove undefined values
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // Check if origin is in allowed list or is a Railway deployment
+    if (allowedOrigins.includes(origin) || origin.match(/https:\/\/.*\.up\.railway\.app$/)) {
+      callback(null, true);
+    } else {
+      logger.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
