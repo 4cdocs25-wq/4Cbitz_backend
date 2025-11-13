@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import PaymentController from '../controllers/payment.controller.js';
 import authenticateToken from '../middleware/auth.js';
+import { requireAdmin } from '../middleware/roleCheck.js';
 import { paymentValidation } from '../utils/validators.js';
 import validateRequest from '../middleware/validateRequest.js';
 
@@ -28,6 +29,23 @@ router.get(
   '/status/:sessionId',
   authenticateToken,
   PaymentController.getPaymentStatus
+);
+
+// Admin routes
+// Get all transactions (admin only)
+router.get(
+  '/admin/transactions',
+  authenticateToken,
+  requireAdmin,
+  PaymentController.getAdminTransactions
+);
+
+// Get transaction statistics (admin only)
+router.get(
+  '/admin/stats',
+  authenticateToken,
+  requireAdmin,
+  PaymentController.getAdminTransactionStats
 );
 
 export default router;

@@ -12,13 +12,10 @@ class PaymentService {
   // Create Stripe Checkout Session
   static async createCheckoutSession(userId, documentId, documentTitle, price) {
     try {
-      // For specific documents, check if already purchased
-      // For lifetime subscriptions (documentId is null), allow purchase
-      if (documentId) {
-        const alreadyPurchased = await checkPurchaseExists(userId, documentId);
-        if (alreadyPurchased) {
-          throw new Error('You have already purchased this document');
-        }
+      // Check if user already has lifetime subscription
+      const hasLifetimeSubscription = await checkPurchaseExists(userId, null);
+      if (hasLifetimeSubscription) {
+        throw new Error('You already have a lifetime subscription');
       }
 
       // Determine success URL based on subscription type
@@ -105,6 +102,12 @@ class PaymentService {
       const documentId = session.metadata.documentId === 'lifetime_subscription'
         ? null
         : session.metadata.documentId;
+
+      // Double-check user doesn't already have lifetime subscription before creating purchase
+      const hasLifetime = await checkPurchaseExists(userId, null);
+      if (hasLifetime) {
+        throw new Error('You already have a lifetime subscription');
+      }
 
       // Create purchase record (grant access)
       // If documentId is null, this represents lifetime access to all documents

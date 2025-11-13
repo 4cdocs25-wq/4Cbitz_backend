@@ -4,16 +4,17 @@ import {
   getDocumentById,
   updateDocument,
   deleteDocument,
+  toggleDocumentVisibility,
   checkPurchaseExists
 } from '../models/queries.js';
 import logger from '../utils/logger.js';
 
 class DocumentService {
   // Create new document
-  static async createDocument(title, description, price, fileUrl, adminId) {
+  static async createDocument(title, description, price, fileUrl, adminId, folderId = null) {
     try {
-      const document = await createDocument(title, description, price, fileUrl, adminId);
-      logger.info(`Document created: ${document.id} by admin: ${adminId}`);
+      const document = await createDocument(title, description, price, fileUrl, adminId, folderId);
+      logger.info(`Document created: ${document.id} by admin: ${adminId}${folderId ? ` in folder: ${folderId}` : ''}`);
       return document;
     } catch (error) {
       logger.error('Create document error:', error);
@@ -22,9 +23,9 @@ class DocumentService {
   }
 
   // Get all active documents (for browse/listing)
-  static async getAllDocuments() {
+  static async getAllDocuments(folderId = null, isAdmin = false) {
     try {
-      const documents = await getAllDocuments();
+      const documents = await getAllDocuments(folderId, isAdmin);
       return documents;
     } catch (error) {
       logger.error('Get all documents error:', error);
@@ -98,6 +99,18 @@ class DocumentService {
       return hasAccess;
     } catch (error) {
       logger.error('Check access error:', error);
+      throw error;
+    }
+  }
+
+  // Toggle document visibility (admin only)
+  static async toggleVisibility(documentId) {
+    try {
+      const document = await toggleDocumentVisibility(documentId);
+      logger.info(`Document visibility toggled: ${documentId}, now ${document.is_visible ? 'visible' : 'hidden'}`);
+      return document;
+    } catch (error) {
+      logger.error('Toggle visibility error:', error);
       throw error;
     }
   }

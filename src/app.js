@@ -10,6 +10,8 @@ import authRoutes from './routes/auth.routes.js';
 import documentRoutes from './routes/document.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
 import userRoutes from './routes/user.routes.js';
+import folderRoutes from './routes/folder.routes.js';
+import settingsRoutes from './routes/settings.routes.js';
 
 const app = express();
 
@@ -75,6 +77,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/folders', folderRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // 404 handler
 app.use((req, res) => {

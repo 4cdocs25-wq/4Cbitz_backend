@@ -2,7 +2,7 @@ import express from 'express';
 const router = express.Router();
 import multer from 'multer';
 import DocumentController from '../controllers/document.controller.js';
-import authenticateToken from '../middleware/auth.js';
+import authenticateToken, { optionalAuthenticateToken } from '../middleware/auth.js';
 import { requireAdmin } from '../middleware/roleCheck.js';
 import { documentValidation } from '../utils/validators.js';
 import validateRequest from '../middleware/validateRequest.js';
@@ -23,8 +23,9 @@ const upload = multer({
   }
 });
 
-// Public route - Get all documents (browse/listing)
-router.get('/', DocumentController.getAllDocuments);
+// Public route with optional auth - Get all documents (browse/listing)
+// Admins see all documents, regular users see only visible documents
+router.get('/', optionalAuthenticateToken, DocumentController.getAllDocuments);
 
 // Protected routes - Require authentication
 router.get(
@@ -70,6 +71,15 @@ router.delete(
   documentValidation.getById,
   validateRequest,
   DocumentController.deleteDocument
+);
+
+router.patch(
+  '/:id/visibility',
+  authenticateToken,
+  requireAdmin,
+  documentValidation.getById,
+  validateRequest,
+  DocumentController.toggleVisibility
 );
 
 export default router;

@@ -1,6 +1,6 @@
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
-import { createUser, findUserByEmail } from '../models/queries.js';
+import { createUser, findUserByEmail, findUserById } from '../models/queries.js';
 import logger from '../utils/logger.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -95,14 +95,11 @@ class AuthService {
       const accessToken = this.generateAccessToken(user);
       const refreshToken = this.generateRefreshToken(user);
 
+      // Get complete user data with all fields including profile_completed
+      const completeUser = await findUserById(user.id);
+
       return {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          picture: user.picture
-        },
+        user: completeUser,
         accessToken,
         refreshToken
       };
