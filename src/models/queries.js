@@ -380,7 +380,10 @@ export const getAllTransactionsWithPagination = async (limit = 20, offset = 0, f
   }
 
   if (filters.endDate) {
-    query = query.lte('created_at', filters.endDate);
+    // Include entire day by using "less than next day" to make end date inclusive
+    const endDateTime = new Date(filters.endDate);
+    endDateTime.setDate(endDateTime.getDate() + 1);
+    query = query.lt('created_at', endDateTime.toISOString());
   }
 
   query = query.range(offset, offset + limit - 1);
