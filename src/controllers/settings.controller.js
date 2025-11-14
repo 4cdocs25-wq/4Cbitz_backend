@@ -8,7 +8,7 @@ class SettingsController {
       const { key } = req.params;
 
       // Whitelist of public settings
-      const publicSettings = ['lifetime_subscription_price'];
+      const publicSettings = ['lifetime_subscription_price', 'terms_of_service', 'privacy_policy'];
 
       if (!publicSettings.includes(key)) {
         return res.status(403).json({
