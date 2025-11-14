@@ -31,4 +31,32 @@ router.get('/profile', authenticateToken, AuthController.getProfile);
 // Logout (info endpoint - client handles token removal)
 router.post('/logout', authenticateToken, AuthController.logout);
 
+// Admin email/password login
+router.post(
+  '/admin/login',
+  [
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required'),
+    validateRequest
+  ],
+  AuthController.adminLogin
+);
+
+// Set admin password (protected - admin only)
+router.post(
+  '/admin/set-password',
+  authenticateToken,
+  [
+    body('password')
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters long'),
+    body('currentPassword')
+      .optional({ nullable: true })
+      .isString()
+      .withMessage('Current password must be a string'),
+    validateRequest
+  ],
+  AuthController.setAdminPassword
+);
+
 export default router;

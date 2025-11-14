@@ -17,7 +17,7 @@ export const createUser = async (email, name, role = 'user', googleId = null, pi
 export const findUserByEmail = async (email) => {
   const { data, error } = await supabaseAdmin
     .from('users')
-    .select('*')
+    .select('id, email, name, role, picture, created_at, industry, contact_number, address, profile_completed, google_id, password_hash, auth_method')
     .eq('email', email)
     .single();
 
@@ -28,7 +28,7 @@ export const findUserByEmail = async (email) => {
 export const findUserById = async (id) => {
   const { data, error } = await supabaseAdmin
     .from('users')
-    .select('id, email, name, role, picture, created_at, industry, contact_number, address, profile_completed')
+    .select('id, email, name, role, picture, created_at, industry, contact_number, address, profile_completed, password_hash')
     .eq('id', id)
     .single();
 
@@ -58,6 +58,22 @@ export const updateUserProfile = async (id, profileData) => {
     .from('users')
     .update(updates)
     .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const updateUserPassword = async (userId, passwordHash) => {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .update({
+      password_hash: passwordHash,
+      auth_method: 'both', // User can now login with both Google and email/password
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', userId)
     .select()
     .single();
 
