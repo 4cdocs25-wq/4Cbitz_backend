@@ -115,7 +115,7 @@ class FolderService {
     }
   }
 
-  // Delete folder
+  // Delete folder with cascade (deletes all subfolders and documents)
   static async delete(id, adminId) {
     try {
       // Check folder exists and belongs to admin
@@ -124,24 +124,48 @@ class FolderService {
         throw new Error('Unauthorized: You can only delete your own folders');
       }
 
-      // Check if folder has children
-      const descendants = await getFolderDescendants(id);
-      if (descendants.length > 0) {
-        throw new Error(`Cannot delete folder: it contains ${descendants.length} subfolder(s). Delete subfolders first.`);
-      }
+      // Cascade delete: recursively delete all subfolders and documents
+      await this.cascadeDeleteFolder(id, adminId);
 
-      // Check if folder has documents
-      const folderWithDocs = await getFolderWithDocuments(id);
-      if (folderWithDocs.documents && folderWithDocs.documents.length > 0) {
-        throw new Error(`Cannot delete folder: it contains ${folderWithDocs.documents.length} document(s). Move or delete documents first.`);
-      }
+      logger.info(`Folder deleted with cascade: ${id} by admin: ${adminId}`);
 
-      await deleteFolder(id);
-      logger.info(`Folder deleted: ${id} by admin: ${adminId}`);
-
-      return { success: true, message: 'Folder deleted successfully' };
+      return { success: true, message: 'Folder and all its contents deleted successfully' };
     } catch (error) {
       logger.error(`Delete folder error for ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Helper: Recursively delete folder and all its contents
+  static async cascadeDeleteFolder(folderId, adminId) {
+    try {
+      // Import document deletion function
+      const { deleteDocument } = await import('../models/queries.js');
+
+      // Get all subfolders
+      const descendants = await getFolderDescendants(folderId);
+
+      // Recursively delete all subfolders (deepest first)
+      for (const subfolder of descendants.reverse()) {
+        await this.cascadeDeleteFolder(subfolder.id, adminId);
+      }
+
+      // Get all documents in this folder
+      const folderWithDocs = await getFolderWithDocuments(folderId);
+
+      // Delete all documents in this folder
+      if (folderWithDocs.documents && folderWithDocs.documents.length > 0) {
+        for (const doc of folderWithDocs.documents) {
+          await deleteDocument(doc.id);
+          logger.info(`Document deleted during cascade: ${doc.id}`);
+        }
+      }
+
+      // Finally, delete the folder itself
+      await deleteFolder(folderId);
+      logger.info(`Subfolder deleted during cascade: ${folderId}`);
+    } catch (error) {
+      logger.error(`Cascade delete error for folder ${folderId}:`, error);
       throw error;
     }
   }
