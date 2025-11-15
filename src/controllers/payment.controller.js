@@ -9,6 +9,7 @@ class PaymentController {
     try {
       const { documentId } = req.body;
       const userId = req.user.id;
+      const userEmail = req.user.email;
 
       let title, price;
 
@@ -52,6 +53,7 @@ class PaymentController {
       // Create checkout session
       const result = await PaymentService.createCheckoutSession(
         userId,
+        userEmail,
         documentId || null, // Pass null for lifetime subscription
         title,
         price
@@ -149,6 +151,20 @@ class PaymentController {
     } catch (error) {
       logger.error('Get transaction stats controller error:', error);
       next(error);
+    }
+  }
+
+  // Handle Stripe webhook events
+  static async handleWebhook(req, res, next) {
+    try {
+      const result = await PaymentService.handleStripeWebhook(req);
+
+      // Return 200 to acknowledge receipt of event
+      return res.status(200).json({ received: true });
+    } catch (error) {
+      logger.error('Webhook handler error:', error);
+      // Return 400 for webhook errors
+      return res.status(400).json({ error: error.message });
     }
   }
 }

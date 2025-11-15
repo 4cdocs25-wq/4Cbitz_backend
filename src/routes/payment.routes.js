@@ -48,4 +48,11 @@ router.get(
   PaymentController.getAdminTransactionStats
 );
 
+// Stripe webhook endpoint (no auth - Stripe calls this)
+router.post(
+  '/webhook',
+  express.raw({ type: 'application/json' }),
+  PaymentController.handleWebhook
+);
+
 export default router;

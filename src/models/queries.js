@@ -432,6 +432,7 @@ export const getAllUsersWithSubscription = async (limit = 20, offset = 0, search
       name,
       role,
       created_at,
+      contact_number,
       purchases(id, amount, created_at, document_id, status)
     `)
     .neq('role', 'admin')
@@ -462,6 +463,7 @@ export const getAllUsersWithSubscription = async (limit = 20, offset = 0, search
       name: user.name,
       role: user.role,
       created_at: user.created_at,
+      contact_number: user.contact_number,
       hasLifetimeSubscription,
       subscriptionDate: lifetimePurchase?.created_at || null,
       subscriptionAmount: lifetimePurchase?.amount || null
