@@ -16,6 +16,9 @@ import publicDocumentRoutes, { publicRouter as publicDocumentPublicRoutes } from
 
 const app = express();
 
+// Trust proxy - required for Railway/cloud deployments
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
