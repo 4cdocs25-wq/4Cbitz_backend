@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { createUser, findUserByEmail, findUserById } from '../models/queries.js';
 import logger from '../utils/logger.js';
+import EmailService from './email.service.js';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -88,6 +89,10 @@ class AuthService {
         );
 
         logger.info(`New user created via Google OAuth: ${user.email}`);
+
+        // Send welcome email (don't await to avoid blocking registration)
+        EmailService.sendWelcomeEmail(user.email, user.name)
+          .catch(error => logger.error('Failed to send welcome email:', error));
       } else {
         logger.info(`Existing user logged in via Google OAuth: ${user.email}`);
       }

@@ -422,7 +422,9 @@ export const getTransactionStats = async () => {
   };
 };
 
-export const getAllUsersWithSubscription = async (limit = 20, offset = 0, search = '') => {
+export const getAllUsersWithSubscription = async (limit = 20, offset = 0, filters = {}) => {
+  const { search = '', startDate = null, endDate = null } = filters;
+
   // Get users with their purchase info (excluding admins)
   let query = supabaseAdmin
     .from('users')
@@ -440,6 +442,18 @@ export const getAllUsersWithSubscription = async (limit = 20, offset = 0, search
 
   if (search) {
     query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`);
+  }
+
+  // Date filtering on created_at (join date)
+  if (startDate) {
+    query = query.gte('created_at', startDate);
+  }
+
+  if (endDate) {
+    // Include entire day by using "less than next day" to make end date inclusive
+    const endDateTime = new Date(endDate);
+    endDateTime.setDate(endDateTime.getDate() + 1);
+    query = query.lt('created_at', endDateTime.toISOString());
   }
 
   query = query.range(offset, offset + limit - 1);
@@ -665,6 +679,71 @@ export const createSetting = async (key, value, description = null) => {
   const { data, error } = await supabaseAdmin
     .from('settings')
     .insert([{ key, value, description }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+// ============= PUBLIC DOCUMENT QUERIES =============
+
+export const createPublicDocument = async (title, description, fileUrl, adminId) => {
+  const { data, error } = await supabaseAdmin
+    .from('public_documents')
+    .insert([{
+      title,
+      description,
+      file_url: fileUrl,
+      admin_id: adminId,
+      is_active: true
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const getAllPublicDocuments = async () => {
+  const { data, error} = await supabaseAdmin
+    .from('public_documents')
+    .select('id, title, description, file_url, public_token, is_active, created_at, updated_at')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+};
+
+export const getPublicDocumentByToken = async (token) => {
+  const { data, error } = await supabaseAdmin
+    .from('public_documents')
+    .select('id, title, description, file_url, created_at')
+    .eq('public_token', token)
+    .eq('is_active', true)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
+  return data;
+};
+
+export const deletePublicDocument = async (id) => {
+  const { data, error } = await supabaseAdmin
+    .from('public_documents')
+    .delete()
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};
+
+export const togglePublicDocumentStatus = async (id, isActive) => {
+  const { data, error } = await supabaseAdmin
+    .from('public_documents')
+    .update({ is_active: isActive, updated_at: new Date().toISOString() })
+    .eq('id', id)
     .select()
     .single();
 

@@ -12,6 +12,7 @@ import paymentRoutes from './routes/payment.routes.js';
 import userRoutes from './routes/user.routes.js';
 import folderRoutes from './routes/folder.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
+import publicDocumentRoutes, { publicRouter as publicDocumentPublicRoutes } from './routes/publicDocument.routes.js';
 
 const app = express();
 
@@ -79,6 +80,8 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/public-documents', publicDocumentRoutes); // Admin routes for managing public documents
+app.use('/api/public', publicDocumentPublicRoutes); // Public access route (no authentication required)
 
 // 404 handler
 app.use((req, res) => {

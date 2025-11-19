@@ -4,9 +4,11 @@ import {
   updatePaymentStatus,
   getPaymentBySessionId,
   createPurchase,
-  checkPurchaseExists
+  checkPurchaseExists,
+  findUserById
 } from '../models/queries.js';
 import logger from '../utils/logger.js';
+import EmailService from './email.service.js';
 
 class PaymentService {
   // Create Stripe Checkout Session
@@ -127,6 +129,16 @@ class PaymentService {
 
       logger.info(`Payment verified and access granted: ${sessionId}, type: ${session.metadata.subscriptionType}`);
 
+      // Send payment success email (don't await to avoid blocking response)
+      const user = await findUserById(session.metadata.userId);
+      if (user) {
+        EmailService.sendPaymentSuccessEmail(user.email, user.name, {
+          amount: payment.amount,
+          subscriptionType: session.metadata.subscriptionType,
+          transactionId: sessionId
+        }).catch(error => logger.error('Failed to send payment email:', error));
+      }
+
       return {
         success: true,
         documentId: documentId,
@@ -230,6 +242,16 @@ class PaymentService {
       );
 
       logger.info(`Webhook: Payment completed and access granted: ${session.id}`);
+
+      // Send payment success email via webhook (don't await)
+      const user = await findUserById(session.metadata.userId);
+      if (user) {
+        EmailService.sendPaymentSuccessEmail(user.email, user.name, {
+          amount: payment.amount,
+          subscriptionType: session.metadata.subscriptionType,
+          transactionId: session.id
+        }).catch(error => logger.error('Failed to send payment email (webhook):', error));
+      }
     } catch (error) {
       logger.error('Error handling checkout.session.completed:', error);
       throw error;

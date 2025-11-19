@@ -73,9 +73,13 @@ class UserController {
     try {
       const limit = parseInt(req.query.limit) || 20;
       const offset = parseInt(req.query.offset) || 0;
-      const search = req.query.search || '';
+      const filters = {
+        search: req.query.search || '',
+        startDate: req.query.startDate || null,
+        endDate: req.query.endDate || null
+      };
 
-      const result = await getAllUsersWithSubscription(limit, offset, search);
+      const result = await getAllUsersWithSubscription(limit, offset, filters);
 
       return ResponseHandler.success(res, {
         users: result.users,
