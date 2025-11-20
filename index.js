@@ -39,9 +39,10 @@ if (missingEnvVars.length > 0) {
 }
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server started on port ${PORT}`);
   console.log(`\n 4Csecure Backend Server Running`);
+  console.log(`   Host: 0.0.0.0`);
   console.log(`   Port: ${PORT}`);
   console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`   Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
