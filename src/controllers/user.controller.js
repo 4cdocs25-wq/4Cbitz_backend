@@ -1,4 +1,4 @@
-import { getUserPurchases, findUserById, getAllUsersWithSubscription, updateUserProfile } from '../models/queries.js';
+import { getUserPurchases, findUserById, getAllUsersWithSubscription, updateUserProfile, getUsersForExport } from '../models/queries.js';
 import ResponseHandler from '../utils/responseHandler.js';
 import logger from '../utils/logger.js';
 
@@ -91,6 +91,27 @@ class UserController {
       }, 'Users retrieved successfully');
     } catch (error) {
       logger.error('Get admin users controller error:', error);
+      next(error);
+    }
+  }
+
+  // Admin: Export users for date range
+  static async exportUsers(req, res, next) {
+    try {
+      const { startDate, endDate } = req.query;
+
+      if (!startDate || !endDate) {
+        return ResponseHandler.badRequest(res, 'Start date and end date are required');
+      }
+
+      const users = await getUsersForExport(startDate, endDate);
+
+      return ResponseHandler.success(res, {
+        users,
+        count: users.length
+      }, 'Users exported successfully');
+    } catch (error) {
+      logger.error('Export users controller error:', error);
       next(error);
     }
   }

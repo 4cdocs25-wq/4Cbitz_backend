@@ -17,4 +17,7 @@ router.put('/profile', authenticateToken, UserController.updateProfile);
 // Get all users with subscription information (admin only)
 router.get('/admin/all', authenticateToken, requireAdmin, UserController.getAdminUsers);
 
+// Export users for date range (admin only)
+router.get('/admin/export', authenticateToken, requireAdmin, UserController.exportUsers);
+
 export default router;

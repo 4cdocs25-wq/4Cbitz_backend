@@ -37,6 +37,9 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// Stripe webhook needs raw body - must come BEFORE express.json()
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
 // Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

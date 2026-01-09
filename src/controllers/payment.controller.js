@@ -1,5 +1,5 @@
 import PaymentService from '../services/payment.service.js';
-import { getDocumentById, getAllTransactionsWithPagination, getTransactionStats, getSettingByKey } from '../models/queries.js';
+import { getDocumentById, getAllTransactionsWithPagination, getTransactionStats, getSettingByKey, getTransactionsForExport } from '../models/queries.js';
 import ResponseHandler from '../utils/responseHandler.js';
 import logger from '../utils/logger.js';
 
@@ -150,6 +150,27 @@ class PaymentController {
       return ResponseHandler.success(res, stats, 'Transaction statistics retrieved successfully');
     } catch (error) {
       logger.error('Get transaction stats controller error:', error);
+      next(error);
+    }
+  }
+
+  // Admin: Export transactions for date range
+  static async exportTransactions(req, res, next) {
+    try {
+      const { startDate, endDate } = req.query;
+
+      if (!startDate || !endDate) {
+        return ResponseHandler.badRequest(res, 'Start date and end date are required');
+      }
+
+      const transactions = await getTransactionsForExport(startDate, endDate);
+
+      return ResponseHandler.success(res, {
+        transactions,
+        count: transactions.length
+      }, 'Transactions exported successfully');
+    } catch (error) {
+      logger.error('Export transactions controller error:', error);
       next(error);
     }
   }

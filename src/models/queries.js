@@ -359,7 +359,7 @@ export const getAllTransactionsWithPagination = async (limit = 20, offset = 0, f
       created_at,
       updated_at,
       stripe_session_id,
-      user:users!inner(id, email, name, role),
+      user:users!inner(id, email, name, role, contact_number),
       document:documents(id, title)
     `)
     .order('created_at', { ascending: false })
@@ -393,6 +393,38 @@ export const getAllTransactionsWithPagination = async (limit = 20, offset = 0, f
   if (error) throw error;
 
   return { transactions: data || [], count };
+};
+
+export const getTransactionsForExport = async (startDate, endDate) => {
+  let query = supabaseAdmin
+    .from('payments')
+    .select(`
+      id,
+      amount,
+      status,
+      created_at,
+      stripe_session_id,
+      user:users!inner(id, email, name, role, contact_number),
+      document:documents(id, title)
+    `)
+    .order('created_at', { ascending: false })
+    .neq('user.role', 'admin');
+
+  if (startDate) {
+    query = query.gte('created_at', startDate);
+  }
+
+  if (endDate) {
+    const endDateTime = new Date(endDate);
+    endDateTime.setDate(endDateTime.getDate() + 1);
+    query = query.lt('created_at', endDateTime.toISOString());
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data || [];
 };
 
 export const getTransactionStats = async () => {
@@ -485,6 +517,60 @@ export const getAllUsersWithSubscription = async (limit = 20, offset = 0, filter
   });
 
   return { users };
+};
+
+export const getUsersForExport = async (startDate, endDate) => {
+  let query = supabaseAdmin
+    .from('users')
+    .select(`
+      id,
+      email,
+      name,
+      role,
+      created_at,
+      contact_number,
+      purchases(id, amount, created_at, document_id, status)
+    `)
+    .neq('role', 'admin')
+    .order('created_at', { ascending: false });
+
+  if (startDate) {
+    query = query.gte('created_at', startDate);
+  }
+
+  if (endDate) {
+    const endDateTime = new Date(endDate);
+    endDateTime.setDate(endDateTime.getDate() + 1);
+    query = query.lt('created_at', endDateTime.toISOString());
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  // Process data to determine subscription status
+  const users = data.map(user => {
+    const hasLifetimeSubscription = user.purchases?.some(
+      p => p.document_id === null && p.status === 'completed'
+    );
+    const lifetimePurchase = user.purchases?.find(
+      p => p.document_id === null && p.status === 'completed'
+    );
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      created_at: user.created_at,
+      contact_number: user.contact_number,
+      hasLifetimeSubscription,
+      subscriptionDate: lifetimePurchase?.created_at || null,
+      subscriptionAmount: lifetimePurchase?.amount || null
+    };
+  });
+
+  return users;
 };
 
 // ============= FOLDER QUERIES =============

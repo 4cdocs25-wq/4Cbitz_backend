@@ -17,10 +17,10 @@ export const welcomeEmailTemplate = (userName) => `
                     <tr>
                         <td style="background: linear-gradient(135deg, #292A77 0%, #1a1b4d 100%); padding: 40px 30px; text-align: center;">
                             <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">
-                                Welcome to 4C BZ Management Services
+                                Welcome to <br> 4C BZ Management Services
                             </h1>
                             <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
-                                A Vertical of 4C Integrated Communicators
+                                A vertical of 4C Integrated Communicators
                             </p>
                         </td>
                     </tr>
@@ -161,7 +161,7 @@ export const paymentSuccessEmailTemplate = (userName) => {
                             </p>
 
                             <p style="color: #666666; line-height: 1.6; margin: 0 0 15px 0; font-size: 16px;">
-                                We're excited to welcome you to the <strong>4C Doc</strong> community.
+                                We're excited to welcome you to the <strong>4C BZ</strong> community.
                             </p>
 
                             <p style="color: #666666; line-height: 1.6; margin: 0 0 20px 0; font-size: 16px;">
@@ -172,7 +172,7 @@ export const paymentSuccessEmailTemplate = (userName) => {
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
                                 <tr>
                                     <td align="center">
-                                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}"
+                                        <a href="${process.env.FRONTEND_URL || 'http://4cbz.com'}"
                                            style="display: inline-block; background-color: #292A77; color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 6px; font-weight: bold; font-size: 16px;">
                                             Access Your Guide
                                         </a>

@@ -48,6 +48,14 @@ router.get(
   PaymentController.getAdminTransactionStats
 );
 
+// Export transactions for date range (admin only)
+router.get(
+  '/admin/export',
+  authenticateToken,
+  requireAdmin,
+  PaymentController.exportTransactions
+);
+
 // Stripe webhook endpoint (no auth - Stripe calls this)
 router.post(
   '/webhook',

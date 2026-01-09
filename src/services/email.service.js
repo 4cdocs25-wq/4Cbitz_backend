@@ -34,7 +34,7 @@ class EmailService {
 
       const mailOptions = {
         from: {
-          name: process.env.EMAIL_FROM_NAME || '4CBitz',
+          name: process.env.EMAIL_FROM_NAME || '4C BZ',
           address: process.env.EMAIL_FROM || process.env.SMTP_USER
         },
         to,
@@ -54,7 +54,7 @@ class EmailService {
   // Send welcome email to new users
   static async sendWelcomeEmail(userEmail, userName) {
     try {
-      const subject = 'Welcome to 4CBitz - Your Business Setup Guide Awaits!';
+      const subject = 'Welcome to 4C BZ - Your Guide Awaits!';
       const html = welcomeEmailTemplate(userName);
 
       await this.sendEmail(userEmail, subject, html);
@@ -70,7 +70,7 @@ class EmailService {
   // Send payment success email
   static async sendPaymentSuccessEmail(userEmail, userName, paymentDetails) {
     try {
-      const subject = 'Payment Successful - Welcome to 4CBitz Premium!';
+      const subject = 'Payment Successful - Welcome to 4C BZ Documents!';
       const html = paymentSuccessEmailTemplate(userName, paymentDetails);
 
       await this.sendEmail(userEmail, subject, html);
