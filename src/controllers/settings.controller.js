@@ -1,4 +1,5 @@
 import SettingsService from '../services/settings.service.js';
+import { getSettingByKey } from '../models/queries.js';
 import logger from '../utils/logger.js';
 
 class SettingsController {
@@ -6,6 +7,39 @@ class SettingsController {
   static async getPublicSetting(req, res) {
     try {
       const { key } = req.params;
+
+      // This is a calculated public value, not a setting that can be changed publicly.
+      // It keeps campaign controls private while giving the customer page the actual offer.
+      if (key === 'subscription-offer') {
+        const [priceSetting, freeAccessEnabledSetting, freeAccessEndsAtSetting] = await Promise.all([
+          getSettingByKey('lifetime_subscription_price'),
+          getSettingByKey('free_access_enabled'),
+          getSettingByKey('free_access_ends_at')
+        ]);
+
+        const paidPrice = Number.parseFloat(priceSetting?.value);
+        if (!Number.isFinite(paidPrice) || paidPrice <= 0) {
+          throw new Error('Subscription price is not configured');
+        }
+
+        const endsAt = freeAccessEndsAtSetting?.value
+          ? new Date(freeAccessEndsAtSetting.value)
+          : null;
+        const isFreeAccessCampaign = freeAccessEnabledSetting?.value === 'true'
+          && endsAt !== null
+          && !Number.isNaN(endsAt.getTime())
+          && endsAt.getTime() > Date.now();
+
+        return res.json({
+          success: true,
+          data: {
+            price: isFreeAccessCampaign ? '0.00' : paidPrice.toFixed(2),
+            originalPrice: paidPrice.toFixed(2),
+            isFreeAccessCampaign,
+            endsAt: isFreeAccessCampaign ? endsAt.toISOString() : null
+          }
+        });
+      }
 
       // Whitelist of public settings
       const publicSettings = ['lifetime_subscription_price', 'terms_of_service', 'privacy_policy', 'refund_policy', 'footer_address', 'footer_email', 'footer_tel'];
@@ -73,7 +107,7 @@ class SettingsController {
       const { key } = req.params;
       const { value } = req.body;
 
-      if (!value) {
+      if (value === undefined || value === null || value === '') {
         return res.status(400).json({
           success: false,
           message: 'Value is required'

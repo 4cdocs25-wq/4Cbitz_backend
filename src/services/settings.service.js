@@ -42,6 +42,20 @@ class SettingsService {
         value = price.toFixed(2);
       }
 
+      if (key === 'free_access_enabled') {
+        if (value !== 'true' && value !== 'false') {
+          throw new Error('Free access must be either true or false');
+        }
+      }
+
+      if (key === 'free_access_ends_at') {
+        const endsAt = new Date(value);
+        if (Number.isNaN(endsAt.getTime())) {
+          throw new Error('Free access end date must be a valid ISO date/time');
+        }
+        value = endsAt.toISOString();
+      }
+
       const updatedSetting = await updateSetting(key, value);
       return updatedSetting;
     } catch (error) {

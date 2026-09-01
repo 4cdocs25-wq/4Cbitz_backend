@@ -12,7 +12,7 @@ import EmailService from './email.service.js';
 
 class PaymentService {
   // Create Stripe Checkout Session
-  static async createCheckoutSession(userId, userEmail, documentId, documentTitle, price) {
+  static async createCheckoutSession(userId, userEmail, documentId, documentTitle, price, options = {}) {
     try {
       // Check if user already has lifetime subscription
       const hasLifetimeSubscription = await checkPurchaseExists(userId, null);
@@ -24,8 +24,11 @@ class PaymentService {
       const successUrl = `${process.env.FRONTEND_URL}/thank-you?session_id={CHECKOUT_SESSION_ID}`;
 
       // Create Stripe checkout session
+      const isNoCostOrder = price === 0;
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
+        // Stripe does not collect a card for a zero-cost Checkout session.
+        // Do not force `card` here: a no-cost order has no payment method.
+        ...(isNoCostOrder ? {} : { payment_method_types: ['card'] }),
         customer_email: userEmail,
         line_items: [
           {
@@ -48,7 +51,8 @@ class PaymentService {
         metadata: {
           userId,
           documentId: documentId || 'lifetime_subscription', // Use special marker for lifetime
-          subscriptionType: documentId ? 'document' : 'lifetime'
+          subscriptionType: documentId ? 'document' : 'lifetime',
+          freeAccessCampaign: options.isFreeAccessCampaign ? 'true' : 'false'
         }
       });
 
