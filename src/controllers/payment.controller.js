@@ -11,7 +11,7 @@ class PaymentController {
       const userId = req.user.id;
       const userEmail = req.user.email;
 
-      let title, price;
+      let title, price, isFreeAccessCampaign = false;
 
       // If documentId is provided, get specific document details
       if (documentId) {
@@ -46,8 +46,22 @@ class PaymentController {
           throw new Error('Invalid subscription price configuration. Please contact support.');
         }
 
-        price = parsedPrice;
-        logger.info(`Using subscription price from settings: $${price}`);
+        const [freeAccessEnabledSetting, freeAccessEndsAtSetting] = await Promise.all([
+          getSettingByKey('free_access_enabled'),
+          getSettingByKey('free_access_ends_at')
+        ]);
+        const freeAccessEndsAt = freeAccessEndsAtSetting?.value
+          ? new Date(freeAccessEndsAtSetting.value)
+          : null;
+
+        // Both settings are required. A missing or invalid end date safely falls back to paid access.
+        isFreeAccessCampaign = freeAccessEnabledSetting?.value === 'true'
+          && freeAccessEndsAt !== null
+          && !Number.isNaN(freeAccessEndsAt.getTime())
+          && freeAccessEndsAt.getTime() > Date.now();
+
+        price = isFreeAccessCampaign ? 0 : parsedPrice;
+        logger.info(`Using ${isFreeAccessCampaign ? 'free campaign' : 'subscription'} price: $${price}`);
       }
 
       // Create checkout session
@@ -56,7 +70,8 @@ class PaymentController {
         userEmail,
         documentId || null, // Pass null for lifetime subscription
         title,
-        price
+        price,
+        { isFreeAccessCampaign }
       );
 
       return ResponseHandler.success(res, result, 'Checkout session created');
